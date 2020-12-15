@@ -7,9 +7,14 @@ namespace Day12
 {
     class Program
     {
+        private static List<string> input;
+
         static void Main(string[] args)
         {
+            var sr = new StreamReader(@"input.txt");
+            input = sr.ReadToEnd().Split("\r\n", StringSplitOptions.RemoveEmptyEntries).ToList();
             One();
+            Two();
         }
 
         static void One()
@@ -17,8 +22,7 @@ namespace Day12
             var direction = 'E';
             var x = 0;
             var y = 0;
-            var sr = new StreamReader(@"input.txt");
-            var input = sr.ReadToEnd().Split("\r\n", StringSplitOptions.RemoveEmptyEntries).ToList();
+            
             input.ForEach(op =>
             {
                 var instruction = op[0];
@@ -49,7 +53,43 @@ namespace Day12
             Console.WriteLine($"Manhattan distance {Math.Abs(x) + Math.Abs(y)}");
         }
 
-        private static ( int xOffset, int yOffset) Move(char direction, int amount)
+        static void Two()
+        {
+            var wayPointX = 10;
+            var wayPointY = 1;
+            var shipX = 0;
+            var shipY = 0;
+
+            input.ForEach(op =>
+            {
+                var instruction = op[0];
+                var amount = Convert.ToInt32(op.Substring(1));
+                if (new[] {'N', 'E', 'S', 'W'}.Contains(instruction))
+                {
+                    var (xOffset, yOffset) = Move(instruction, amount);
+                    wayPointX += xOffset;
+                    wayPointY += yOffset;
+                }
+                else if (instruction.Equals('F'))
+                {
+                    shipX += amount * wayPointX;
+                    shipY += amount * wayPointY;
+                }
+                else if (new[] {'L', 'R'}.Contains(instruction))
+                {
+                    (wayPointX, wayPointY) = instruction switch
+                    {
+                        //var degrees = Degrees(shipDirection);
+                        'L' => Rotate(360 - amount, wayPointX, wayPointY),
+                        'R' => Rotate(amount, wayPointX, wayPointY),
+                        _ => (wayPointX, wayPointY)
+                    };
+                }
+            });
+            Console.WriteLine($"Manhattan distance {Math.Abs(shipX) + Math.Abs(shipY)}");
+        }
+
+        private static (int xOffset, int yOffset) Move(char direction, int amount)
         {
             return direction switch
             {
@@ -61,6 +101,17 @@ namespace Day12
             };
         }
 
+        private static (int x, int y) Rotate(int degrees, int waypointX, int waypointY)
+        {
+            return degrees switch
+            {
+                0 => (waypointX, waypointY),
+                90 => (waypointY, -waypointX),
+                180 => (-waypointX, -waypointY),
+                270 => (-waypointY, waypointX),
+                _ => (0, 0)
+            };
+        }
         private static int Degrees(char direction)
         {
             return direction switch
